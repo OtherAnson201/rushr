@@ -1,24 +1,24 @@
 # Rushr
 
-A simple aimlock and ESP for Roblox on Windows. It runs as its own program: it reads the game's memory from outside, draws on a see-through overlay, and moves your real mouse. Nothing is injected into the game.
+An external overlay for Roblox on Windows. It runs as its own program: it reads player data from the game's memory, draws it on a see-through overlay, and can move your real mouse onto a player. Nothing is injected into the game.
 
 > [!WARNING]
 > Using this breaks Roblox's Terms of Use and can get your account banned. Use it at your own risk.
 
 ## Features
 
-**Aimlock**
+**Mouse lock**
 
-- Locks onto the player closest to your cursor inside the FOV circle, and stays on them until you let go of the key or they leave the server.
-- Aims at the head, the torso, or whichever of the two is closest to the cursor.
-- Adjustable FOV size, with an optional circle on screen.
-- Adjustable lock speed, where 100 snaps instantly.
+- Moves your mouse onto the player closest to your cursor inside an adjustable circle, and stays on them until you let go of the key or they leave the server.
+- Targets the head, the torso, or whichever of the two is closest to the cursor.
+- Adjustable circle size, with the option to show it on screen.
+- Adjustable speed, where 100 snaps instantly.
 
-**ESP**
+**Player overlay**
 
 - Box, name and health bar for every other player, each with its own colour.
 
-There are no target checks. It aims at and draws everyone, including teammates, friends, dead players and anyone behind a wall. The only things it skips are you, and body parts that aren't loaded or are off screen.
+It treats every player the same, including teammates, friends, dead players and anyone behind a wall. The only things it skips are you, and body parts that aren't loaded or are off screen.
 
 ## Requirements
 
@@ -43,11 +43,11 @@ Everything starts off, so turn on what you want:
 
 | Tab | Settings |
 |---|---|
-| **Aimbot** | Enable and key, Hitbone, FOV size and circle, Sensitivity |
-| **Visual** | Enable, Box, Name, Healthbar |
-| **Settings** | Save, load and delete configs, hide the overlay from OBS and clips, Unload |
+| First | Mouse lock: enable and key, Hitbone, FOV size and circle, Sensitivity |
+| Second | Player overlay: enable, Box, Name, Healthbar |
+| Third | Save, load and delete configs, hide the overlay from OBS and clips, Unload |
 
-**Aim key:** right-click the key button to choose toggle, hold or always. With no key bound, the aimlock runs whenever it's enabled. While the menu is open, it only moves the mouse on a held key, so you can always reach the menu to turn it off.
+**Lock key:** right-click the key button to choose toggle, hold or always. With no key bound, the lock runs whenever it's enabled. While the menu is open, it only moves the mouse on a held key, so you can always reach the menu to turn it off.
 
 Configs are saved in `%APPDATA%\1\configs` and logs in `%APPDATA%\1\logs`.
 
@@ -74,8 +74,8 @@ The project and exe are still named Glory.
 
 | Path | Purpose |
 |---|---|
-| `Glory/src/features/targeting` | The aimlock |
-| `Glory/src/features/spotter` | The ESP |
+| `Glory/src/features/targeting` | The mouse lock |
+| `Glory/src/features/spotter` | The player overlay |
 | `Glory/src/cache` | Keeps the player list up to date on a background thread |
 | `Glory/src/game`, `sdk`, `memory` | Finds the game and reads its data |
 | `Glory/src/render` | Overlay, menu, keybinds and configs |
