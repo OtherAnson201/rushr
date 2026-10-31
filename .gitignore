@@ -1,0 +1,13 @@
+build/
+artifacts/
+.vs/
+.vscode/
+*.obj
+*.pdb
+*.ilk
+*.ipch
+*.tlog
+*.user
+*.log
+*.exe
+*.zip

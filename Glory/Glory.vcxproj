@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{86a42307-5037-4fb0-b863-92073e0d97d4}</ProjectGuid>
+    <RootNamespace>T4</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Glory</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)build\</OutDir>
+    <IntDir>$(SolutionDir)artifacts\</IntDir>
+    <IncludePath>src;ext;ext\ft\freetype\include;ext\Clipper2Lib\include;protections;$(IncludePath)</IncludePath>
+    <LibraryPath>ext\ft\freetype\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)build\</OutDir>
+    <IntDir>$(SolutionDir)artifacts\</IntDir>
+    <IncludePath>src;ext;ext\ft\freetype\include;ext\Clipper2Lib\include;protections;$(IncludePath)</IncludePath>
+    <LibraryPath>ext\ft\freetype\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;Ole32.lib;freetype.lib;Version.lib;Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;Ole32.lib;freetype.lib;Version.lib;Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="ext\Clipper2Lib\src\clipper.engine.cpp" />
+    <ClCompile Include="ext\Clipper2Lib\src\clipper.offset.cpp" />
+    <ClCompile Include="ext\Clipper2Lib\src\clipper.rectclip.cpp" />
+    <ClCompile Include="ext\imgui\imgui.cpp" />
+    <ClCompile Include="ext\imgui\imgui_demo.cpp" />
+    <ClCompile Include="ext\imgui\imgui_draw.cpp" />
+    <ClCompile Include="ext\imgui\addons\imgui_addons.cpp" />
+    <ClCompile Include="ext\imgui\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="ext\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="ext\imgui\misc\imgui_freetype.cpp" />
+    <ClCompile Include="ext\imgui\imgui_tables.cpp" />
+    <ClCompile Include="ext\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\cache\cache.cpp" />
+    <ClCompile Include="src\features\targeting\targeting.cpp" />
+    <ClCompile Include="src\features\spotter\spotter.cpp" />
+    <ClCompile Include="src\visibility\visibility.cpp" />
+    <ClCompile Include="src\render\keybind\keybind.cpp" />
+    <ClCompile Include="src\features\stabilizer\stabilizer.cpp" />
+    <ClCompile Include="src\features\clicker\clicker.cpp" />
+    <ClCompile Include="src\features\netblock\netblock.cpp" />
+    <ClCompile Include="src\features\friends\friends.cpp" />
+    <ClCompile Include="src\net\https.cpp" />
+    <ClCompile Include="src\features\macros\macros.cpp" />
+    <ClCompile Include="src\features\mover\mover.cpp" />
+    <ClCompile Include="src\features\correction\correction.cpp" />
+    <ClCompile Include="src\features\autofire\autofire.cpp" />
+    <ClCompile Include="src\game\game.cpp" />
+    <ClCompile Include="src\logger\logger.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\memory\memory.cpp" />
+    <ClCompile Include="src\render\render.cpp" />
+    <ClCompile Include="src\render\menu_mouse.cpp" />
+    <ClCompile Include="src\render\config\config.cpp" />
+    <ClCompile Include="src\sdk\sdk.cpp" />
+    <MASM Include="src\memory\luck.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ext\Clipper2Lib\include\clipper2\clipper.core.h" />
+    <ClInclude Include="ext\Clipper2Lib\include\clipper2\clipper.engine.h" />
+    <ClInclude Include="ext\Clipper2Lib\include\clipper2\clipper.export.h" />
+    <ClInclude Include="ext\Clipper2Lib\include\clipper2\clipper.h" />
+    <ClInclude Include="ext\Clipper2Lib\include\clipper2\clipper.minkowski.h" />
+    <ClInclude Include="ext\Clipper2Lib\include\clipper2\clipper.offset.h" />
+    <ClInclude Include="ext\Clipper2Lib\include\clipper2\clipper.rectclip.h" />
+    <ClInclude Include="ext\Clipper2Lib\include\clipper2\clipper.version.h" />
+    <ClInclude Include="ext\imgui\imconfig.h" />
+    <ClInclude Include="ext\imgui\imgui.h" />
+    <ClInclude Include="ext\imgui\addons\imgui_addons.h" />
+    <ClInclude Include="ext\imgui\backends\imgui_impl_dx11.h" />
+    <ClInclude Include="ext\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="ext\imgui\imgui_internal.h" />
+    <ClInclude Include="ext\imgui\imstb_rectpack.h" />
+    <ClInclude Include="ext\imgui\imstb_textedit.h" />
+    <ClInclude Include="ext\imgui\imstb_truetype.h" />
+    <ClInclude Include="ext\nlohmann\json.hpp" />
+    <ClInclude Include="src\cache\cache.h" />
+    <ClInclude Include="src\features\targeting\targeting.h" />
+    <ClInclude Include="src\features\spotter\spotter.h" />
+    <ClInclude Include="src\visibility\visibility.h" />
+    <ClInclude Include="src\visibility\obb.h" />
+    <ClInclude Include="src\timing\precise_sleep.h" />
+    <ClInclude Include="src\render\keybind\keybind.h" />
+    <ClInclude Include="src\features\stabilizer\stabilizer.h" />
+    <ClInclude Include="src\features\clicker\clicker.h" />
+    <ClInclude Include="src\features\netblock\netblock.h" />
+    <ClInclude Include="src\render\menu_mouse.h" />
+    <ClInclude Include="src\features\friends\friends.h" />
+    <ClInclude Include="src\net\https.h" />
+    <ClInclude Include="src\features\macros\macros.h" />
+    <ClInclude Include="src\features\mover\mover.h" />
+    <ClInclude Include="src\features\correction\correction.h" />
+    <ClInclude Include="src\features\autofire\autofire.h" />
+    <ClInclude Include="src\game\game.h" />
+    <ClInclude Include="src\globals.h" />
+    <ClInclude Include="src\logger\logger.h" />
+    <ClInclude Include="src\memory\memory.h" />
+    <ClInclude Include="src\Offsets\Offsets.hpp" />
+    <ClInclude Include="src\render\assets\font_exo2_medium.h" />
+    <ClInclude Include="src\render\assets\settings.h" />
+    <ClInclude Include="src\render\render.h" />
+    <ClInclude Include="src\sdk\sdk.h" />
+    <ClInclude Include="src\sdk\math\math.h" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
+</Project>
