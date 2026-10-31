@@ -10,7 +10,6 @@ namespace game
 	inline rbx::visualengine_t visengine{};
 	inline rbx::instance_t workspace{};
 	inline rbx::instance_t players{};
-	inline rbx::instance_t local_player{};
 	inline std::uint64_t camera{};
 	inline HWND roblox_window = nullptr;
 	inline float window_offset_x = 0.0f;

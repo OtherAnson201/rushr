@@ -28,10 +28,6 @@
 
 #include <render/config/config.h>
 #include <features/spotter/spotter.h>
-#include <features/mover/mover.h>
-#include <features/stabilizer/stabilizer.h>
-#include <features/netblock/netblock.h>
-#include <features/clicker/clicker.h>
 #include <sdk/sdk.h>
 #include <sdk/math/math.h>
 #include <memory/memory.h>
@@ -45,12 +41,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg
 // window message handler for the overlay
 LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-
-    if ((msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP || msg == WM_LBUTTONDBLCLK) && GetMessageExtraInfo() == static_cast<LPARAM>(clicker::click_tag))
-    {
-        return 0;
-    }
-
     if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
     {
         return true;
@@ -559,117 +549,12 @@ void render_t::update_input_passthrough(bool menu_drawn)
     }
 }
 
-// why the lag switch is skipped, for the menu
-static const char* netblock_ignored_text()
-{
-    switch (netblock::ignored_why.load())
-    {
-    case netblock::ignored_t::elsewhere:
-        return "the game was not in front";
-    case netblock::ignored_t::menu_keyboard:
-        return "the menu had the keyboard";
-    case netblock::ignored_t::no_game:
-        return "no game to hold";
-    default:
-        return "";
-    }
-}
-
 // tooltip when hovering an item
 static void hint(const char* text)
 {
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayNormal))
     {
         ImGui::SetTooltip("%s", text);
-    }
-}
-
-// names of the other players for the lists
-static std::vector<std::string> other_player_names()
-{
-    std::vector<std::string> names;
-    for (const cache::entity_t& entity : cache::cached_players)
-    {
-        if (entity.instance.address != cache::cached_local_player.instance.address)
-        {
-            names.push_back(entity.name);
-        }
-    }
-    return names;
-}
-
-// sort names for display
-static void sort_names(std::vector<std::string>& names)
-{
-    std::sort(names.begin(), names.end(), [](const std::string& a, const std::string& b)
-    {
-
-        const int order = ImStricmp(a.c_str(), b.c_str());
-
-        return order != 0 ? order > 0 : a < b;
-    });
-}
-
-template <typename is_selected_t>
-// draw a selectable player list
-static int player_list(const char* id, const std::vector<std::string>& names, is_selected_t is_selected)
-{
-    const ImGuiStyle& style = ImGui::GetStyle();
-
-    const ImVec4 picked_colour = style.Colors[ImGuiCol_SliderGrabActive];
-    const ImVec4 hovered_colour = style.Colors[ImGuiCol_Header];
-    const ImVec4 pressed_colour = style.Colors[ImGuiCol_ButtonActive];
-
-    ImGui::PushStyleColor(ImGuiCol_Header, picked_colour);
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, hovered_colour);
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive, pressed_colour);
-
-    int clicked = -1;
-
-    const float height = ImMax(ImGui::GetContentRegionAvail().y, ImGui::GetTextLineHeightWithSpacing() * 3.0f);
-    if (ImGui::BeginListBox(id, ImVec2(-FLT_MIN, height)))
-    {
-        if (names.empty())
-        {
-            ImGui::TextDisabled("No other players yet");
-        }
-
-        for (int i = 0; i < static_cast<int>(names.size()); i++)
-        {
-            if (ImGui::Selectable(names[i].c_str(), is_selected(names[i])))
-            {
-                clicked = i;
-            }
-        }
-
-        ImGui::EndListBox();
-    }
-
-    ImGui::PopStyleColor(3);
-
-    return clicked;
-}
-
-// draw the list of picked players
-static void picked_player_list(const char* id, std::unordered_set<std::string>& picked_players)
-{
-    std::vector<std::string> names;
-    std::unordered_set<std::string> picked;
-    {
-        std::lock_guard<std::mutex> lock(cache::mtx);
-        names = other_player_names();
-        picked = picked_players;
-    }
-    sort_names(names);
-
-    const int clicked = player_list(id, names, [&picked](const std::string& name) { return picked.contains(name); });
-    if (clicked >= 0)
-    {
-        std::lock_guard<std::mutex> lock(cache::mtx);
-        if (picked_players.erase(names[clicked]) == 0)
-        {
-            picked_players.insert(names[clicked]);
-        }
     }
 }
 
@@ -690,7 +575,7 @@ void render_t::render_menu()
     ImGuiStyle& style = ImGui::GetStyle();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    static std::vector<const char*> m_Tabs = { "Aimbot", "Visual", "Movement", "Utility", "Universal", "Settings" };
+    static std::vector<const char*> m_Tabs = { "Aimbot", "Visual", "Settings" };
     static int m_iCurrentPage = 0;
 
     const char* const menu_name = "External";
@@ -787,167 +672,49 @@ void render_t::render_menu()
             {
             case 0:
             {
-                static std::vector<const char*> targeting_subtabs = { "Aiming", "Triggerbot" };
-                static int targeting_current_subtab = 0;
-
-                ImAdd::RenderSubTabs(targeting_subtabs, targeting_current_subtab);
-
-                ImGui::Dummy(ImVec2(0, style.WindowPadding.y / 2));
-
-                switch (targeting_current_subtab)
+                if (ImAdd::BeginChild("Aimbot", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
                 {
-                case 0:
-                {
-                    if (ImAdd::BeginChild("Aimbot", ImVec2(group_width, 0.0f)))
-                    {
-                        ImAdd::CheckBox("Enable", &settings::targeting::enabled);
+                    ImAdd::CheckBox("Enable", &settings::targeting::enabled);
 
-                        float available_width = ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f;
-                        float max_keybind_width = ImMin(available_width * 0.4f, 120.0f);
+                    float available_width = ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f;
+                    float max_keybind_width = ImMin(available_width * 0.4f, 120.0f);
 
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& targeting_mode = reinterpret_cast<keybind::activation_mode&>(settings::targeting::activation_mode);
-                        keybind::keybind_with_mode("Aimbot key", settings::targeting::keybind, targeting_mode, "aimbot", max_keybind_width);
-                        settings::targeting::activation_mode = static_cast<int>(targeting_mode);
+                    ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
+                    keybind::activation_mode& targeting_mode = reinterpret_cast<keybind::activation_mode&>(settings::targeting::activation_mode);
+                    keybind::keybind_with_mode("Aimbot key", settings::targeting::keybind, targeting_mode, "aimbot", max_keybind_width);
+                    settings::targeting::activation_mode = static_cast<int>(targeting_mode);
 
-                        ImAdd::CheckBox("Sticky aim", &settings::targeting::sticky_aim);
+                    static std::vector<const char*> parts = { "Closest", "Head", "Torso" };
+                    ImAdd::Combo("Hitbone", &settings::targeting::target_part, parts);
 
-                        static std::vector<const char*> parts = { "Closest", "Head", "HumanoidRootPart", "LeftArm", "RightArm", "LeftLeg", "RightLeg" };
-                        ImAdd::Combo("Hitbone", &settings::targeting::target_part, parts);
+                    ImAdd::SeparatorText("FOV");
 
-                        ImAdd::SeparatorText("FOV");
-
-                        ImAdd::SliderFloat("Size", &settings::targeting::fov, 0.f, 1000.f, "%.0f");
-                        ImAdd::CheckBox("Draw", &settings::targeting::draw_fov);
-                        float fov_color_width = ImGui::GetFontSize() * 2.0f + style.ItemSpacing.x;
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - fov_color_width);
-                        ImAdd::ColorEdit4WithHex("Fill", settings::targeting::fov_circle_colour);
-                        ImGui::SameLine();
-                        ImAdd::ColorEdit4WithHex("Outline", settings::targeting::fov_outline_colour);
-
-                        ImAdd::SeparatorText("Misc");
-
-                        ImAdd::SliderFloat("Sensitivity X", &settings::targeting::sensitivity_x, 1.f, 100.f, "%.0f");
-                        ImAdd::SliderFloat("Sensitivity Y", &settings::targeting::sensitivity_y, 1.f, 100.f, "%.0f");
-
-                        ImAdd::CheckBox("Prediction", &settings::targeting::enable_prediction);
-                        if (settings::targeting::enable_prediction)
-                        {
-                            ImAdd::SliderFloat("Prediction X", &settings::targeting::prediction_x, 0.f, 10.f, "%.1f");
-                            ImAdd::SliderFloat("Prediction Y", &settings::targeting::prediction_y, 0.f, 10.f, "%.1f");
-                        }
-
-                        ImAdd::SliderFloat("Switch delay", &settings::targeting::switch_delay, 0.f, 2000.f, "%.0fms");
-
-                        ImAdd::EndChild();
-                    }
-
+                    ImAdd::SliderFloat("Size", &settings::targeting::fov, 0.f, 1000.f, "%.0f");
+                    ImAdd::CheckBox("Draw", &settings::targeting::draw_fov);
+                    float fov_color_width = ImGui::GetFontSize() * 2.0f + style.ItemSpacing.x;
+                    ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - fov_color_width);
+                    ImAdd::ColorEdit4WithHex("Fill", settings::targeting::fov_circle_colour);
                     ImGui::SameLine();
+                    ImAdd::ColorEdit4WithHex("Outline", settings::targeting::fov_outline_colour);
 
-                    if (ImAdd::BeginChild("Silent aim", ImVec2(group_width, 0.0f)))
-                    {
-                        ImAdd::CheckBox("Enable", &settings::correction::enabled);
+                    ImAdd::SeparatorText("Lock");
 
-                        float available_width = ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f;
-                        float max_keybind_width = ImMin(available_width * 0.4f, 120.0f);
+                    ImAdd::SliderFloat("Sensitivity", &settings::targeting::sensitivity, 1.f, 100.f, "%.0f");
+                    hint("How fast the lock turns onto the target, 100 snaps at once.");
 
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& correction_mode = reinterpret_cast<keybind::activation_mode&>(settings::correction::activation_mode);
-                        keybind::keybind_with_mode("Silent aim key", settings::correction::keybind, correction_mode, "silentaim", max_keybind_width);
-                        settings::correction::activation_mode = static_cast<int>(correction_mode);
-
-                        bool silent_always = settings::correction::activation_mode == static_cast<int>(keybind::activation_mode::always);
-                        if (ImAdd::CheckBox("Always on", &silent_always))
-                        {
-                            settings::correction::activation_mode = static_cast<int>(silent_always ? keybind::activation_mode::always : keybind::activation_mode::hold);
-                        }
-
-                        ImAdd::CheckBox("Sticky aim", &settings::correction::sticky_aim);
-                        hint("Stays on the same player while they are inside the FOV,\ninstead of moving on to whoever comes closer.");
-
-                        static std::vector<const char*> correction_parts = { "Closest", "Head", "HumanoidRootPart", "LeftArm", "RightArm", "LeftLeg", "RightLeg", "Random visible" };
-                        ImAdd::Combo("Hitbone", &settings::correction::target_part, correction_parts);
-                        hint("Random visible: a different body part every quarter second,\nchosen from the ones with a clear line of sight.");
-
-                        ImAdd::SeparatorText("FOV");
-
-                        ImAdd::SliderFloat("Size", &settings::correction::fov, 0.f, 1000.f, "%.0f");
-                        ImAdd::CheckBox("Draw", &settings::correction::draw_fov);
-                        float fov_color_width = ImGui::GetFontSize() * 2.0f + style.ItemSpacing.x;
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - fov_color_width);
-                        ImAdd::ColorEdit4WithHex("Fill", settings::correction::fov_circle_colour);
-                        ImGui::SameLine();
-                        ImAdd::ColorEdit4WithHex("Outline", settings::correction::fov_outline_colour);
-
-                        ImAdd::SeparatorText("Misc");
-
-                        ImAdd::CheckBox("Prediction", &settings::correction::enable_prediction);
-                        if (settings::correction::enable_prediction)
-                        {
-                            ImAdd::SliderFloat("Prediction X", &settings::correction::prediction_x, 0.f, 10.f, "%.1f");
-                            ImAdd::SliderFloat("Prediction Y", &settings::correction::prediction_y, 0.f, 10.f, "%.1f");
-                        }
-
-                        ImAdd::SliderFloat("Switch delay", &settings::correction::switch_delay, 0.f, 2000.f, "%.0fms");
-
-                        ImAdd::EndChild();
-                    }
-                    break;
-                }
-                case 1:
-                {
-                    if (ImAdd::BeginChild("Triggerbot", ImVec2(group_width, 0.0f)))
-                    {
-                        ImAdd::CheckBox("Enable", &settings::autofire::enabled);
-
-                        float available_width = ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f;
-                        float max_keybind_width = ImMin(available_width * 0.4f, 120.0f);
-
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& autofire_mode = reinterpret_cast<keybind::activation_mode&>(settings::autofire::activation_mode);
-                        keybind::keybind_with_mode("##triggerbot_key", settings::autofire::keybind, autofire_mode, "triggerbot", max_keybind_width);
-                        settings::autofire::activation_mode = static_cast<int>(autofire_mode);
-
-                        ImAdd::EndChild();
-                    }
-
-                    ImGui::SameLine();
-
-                    if (ImAdd::BeginChild("Settings", ImVec2(group_width, 0.0f)))
-                    {
-                        ImAdd::SliderFloat("Delay", &settings::autofire::delay, 0.f, 100.f, "%.0fms");
-                        ImAdd::CheckBox("Randomize delay", &settings::autofire::randomize_delay);
-                        if (settings::autofire::randomize_delay)
-                        {
-                            ImAdd::SliderFloat("Min delay", &settings::autofire::delay_min, 0.f, 100.f, "%.0fms");
-                            ImAdd::SliderFloat("Max delay", &settings::autofire::delay_max, 0.f, 100.f, "%.0fms");
-                        }
-
-                        ImAdd::SliderFloat("Hit radius", &settings::autofire::hit_radius, 1.f, 50.f, "%.0fpx");
-                        hint("Fires when the crosshair is within this many pixels of the target.");
-
-                        static std::vector<const char*> target_parts = { "All parts", "Head only", "Torso only", "Limbs only" };
-                        ImAdd::Combo("Hitbone", &settings::autofire::target_part, target_parts);
-
-                        ImAdd::EndChild();
-                    }
-                    break;
-                }
+                    ImAdd::EndChild();
                 }
                 break;
             }
             case 1:
             {
-                if (ImAdd::BeginChild("ESP", ImVec2(group_width, 0.0f)))
+                if (ImAdd::BeginChild("ESP", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
                 {
                     ImAdd::CheckBox("Enable", &settings::visuals::enabled);
 
                     ImAdd::CheckBox("Box", &settings::visuals::box);
                     ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetFontSize() * 1.5f);
                     ImAdd::ColorEdit4WithHex("BoxColor", settings::visuals::box_color);
-
-                    static std::vector<const char*> box_types = { "Normal", "Corner" };
-                    ImAdd::Combo("Box type", &settings::visuals::box_type, box_types);
 
                     ImAdd::CheckBox("Name", &settings::visuals::name);
                     ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetFontSize() * 1.5f);
@@ -957,500 +724,11 @@ void render_t::render_menu()
                     ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetFontSize() * 1.5f);
                     ImAdd::ColorEdit4WithHex("HealthbarColor", settings::visuals::healthbar_color);
 
-                    ImAdd::CheckBox("Friends", &settings::visuals::friends);
-                    hint("Your Roblox friends are always shown, in this colour, and never aimed at (Friend check). Off: they are players like any other.");
-                    ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetFontSize() * 1.5f);
-                    ImAdd::ColorEdit4WithHex("FriendColor", settings::visuals::friend_color);
-
-                    ImAdd::SeparatorText("Team colours");
-                    ImAdd::CheckBox("Colour by team", &settings::visuals::team_colors);
-                    if (settings::visuals::team_colors)
-                    {
-                        ImGui::Text("Guards");
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetFontSize() * 1.5f);
-                        ImAdd::ColorEdit4WithHex("GuardColor", settings::visuals::guard_color);
-
-                        ImGui::Text("Inmates");
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetFontSize() * 1.5f);
-                        ImAdd::ColorEdit4WithHex("InmateColor", settings::visuals::inmate_color);
-
-                        ImGui::Text("Criminals");
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetFontSize() * 1.5f);
-                        ImAdd::ColorEdit4WithHex("CriminalColor", settings::visuals::criminal_color);
-                    }
-
                     ImAdd::EndChild();
                 }
-
-                ImGui::SameLine();
-
-                const float list_height = ImTrunc((ImGui::GetContentRegionAvail().y - style.ItemSpacing.y) / 2.0f);
-
-                ImGui::BeginGroup();
-
-                if (ImAdd::BeginChild("Always show", ImVec2(group_width, list_height)))
-                {
-                    picked_player_list("##always_show", cache::spotter_always_players);
-
-                    ImAdd::EndChild();
-                }
-
-                if (ImAdd::BeginChild("Whitelist", ImVec2(group_width, 0.0f)))
-                {
-                    ImGui::Text("Colour");
-                    hint("Players picked below are drawn in this colour.");
-                    ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetFontSize() * 1.5f);
-                    ImAdd::ColorEdit4WithHex("WhitelistColor", settings::visuals::whitelist_color);
-
-                    picked_player_list("##whitelist", cache::spotter_whitelist_players);
-
-                    ImAdd::EndChild();
-                }
-
-                ImGui::EndGroup();
                 break;
             }
             case 2:
-            {
-                static std::vector<const char*> mover_subtabs = { "Movement", "Teleport" };
-                static int mover_current_subtab = 0;
-
-                ImAdd::RenderSubTabs(mover_subtabs, mover_current_subtab);
-
-                ImGui::Dummy(ImVec2(0, style.WindowPadding.y / 2));
-
-                switch (mover_current_subtab)
-                {
-                case 0:
-                {
-                    if (ImAdd::BeginChild("Movement", ImVec2(group_width, 0.0f)))
-                    {
-                        ImAdd::SeparatorText("Speedhack");
-
-                        ImAdd::CheckBox("Enable##speed", &settings::mover::speedhack::enabled);
-
-                        float available_width = ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f;
-                        float max_keybind_width = ImMin(available_width * 0.4f, 120.0f);
-
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& speedhack_mode = reinterpret_cast<keybind::activation_mode&>(settings::mover::speedhack::activation_mode);
-                        keybind::keybind_with_mode("Speedhack key", settings::mover::speedhack::keybind, speedhack_mode, "speedhack", max_keybind_width);
-                        settings::mover::speedhack::activation_mode = static_cast<int>(speedhack_mode);
-
-                        static std::vector<const char*> speedhack_modes = { "Walkspeed", "Velocity" };
-                        ImAdd::Combo("Mode##speed", &settings::mover::speedhack::mode, speedhack_modes);
-                        ImAdd::SliderFloat("Speed", &settings::mover::speedhack::speed, 1.0f, 1000.0f, "%.1f");
-
-                        ImAdd::SeparatorText("Fly");
-
-                        ImAdd::CheckBox("Enable##fly", &settings::expl::fly_enabled);
-
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& flyhack_mode = reinterpret_cast<keybind::activation_mode&>(settings::expl::fly_keybind_mode);
-                        keybind::keybind_with_mode("Flyhack key", settings::expl::fly_keybind, flyhack_mode, "flyhack", max_keybind_width);
-                        settings::expl::fly_keybind_mode = static_cast<int>(flyhack_mode);
-
-                        static std::vector<const char*> flyhack_modes = { "Velocity", "Position", "Anchored" };
-                        ImAdd::Combo("Mode##fly", &settings::expl::fly_mode, flyhack_modes);
-                        hint("Velocity lets walls stop you, Position and Anchored go through them.\nIf one sinks or jitters with no key pressed, try the next.");
-                        ImAdd::SliderFloat("Speed##fly", &settings::expl::fly_speed, 1.0f, 1000.0f, "%.1f");
-
-                        ImAdd::EndChild();
-                    }
-
-                    ImGui::SameLine();
-
-                    if (ImAdd::BeginChild("Misc", ImVec2(group_width, 0.0f)))
-                    {
-                        float available_width = ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f;
-                        float max_keybind_width = ImMin(available_width * 0.4f, 120.0f);
-
-                        ImAdd::SeparatorText("Jump power");
-                        ImAdd::CheckBox("Enable##jumppower", &settings::mover::jumppower::enabled);
-
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& jumppower_mode = reinterpret_cast<keybind::activation_mode&>(settings::mover::jumppower::activation_mode);
-                        keybind::keybind_with_mode("Jump key", settings::mover::jumppower::keybind, jumppower_mode, "jumppower", max_keybind_width);
-                        settings::mover::jumppower::activation_mode = static_cast<int>(jumppower_mode);
-
-                        ImAdd::SliderFloat("Power", &settings::mover::jumppower::value, 0.0f, 500.0f, "%.1f");
-
-                        ImAdd::SeparatorText("Noclip");
-                        ImAdd::CheckBox("Enable##noclip", &settings::mover::noclip::enabled);
-
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& noclip_mode = reinterpret_cast<keybind::activation_mode&>(settings::mover::noclip::activation_mode);
-                        keybind::keybind_with_mode("Noclip key", settings::mover::noclip::keybind, noclip_mode, "noclip", max_keybind_width);
-                        settings::mover::noclip::activation_mode = static_cast<int>(noclip_mode);
-
-                        ImAdd::SeparatorText("Freecam");
-                        ImAdd::CheckBox("Enable##freecam", &settings::mover::freecam::enabled);
-                        hint("The camera flies with WASD, Space and Ctrl, the mouse turns it. You stay frozen where you are.\nZoom all the way in to fly it as a free camera. Not with shift lock on.");
-
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& freecam_mode = reinterpret_cast<keybind::activation_mode&>(settings::mover::freecam::activation_mode);
-                        keybind::keybind_with_mode("Freecam key", settings::mover::freecam::keybind, freecam_mode, "freecam", max_keybind_width);
-                        settings::mover::freecam::activation_mode = static_cast<int>(freecam_mode);
-
-                        ImAdd::SliderFloat("Speed##freecam", &settings::mover::freecam::speed, settings::mover::freecam::speed_min, settings::mover::freecam::speed_max, "%.0f");
-
-                        ImAdd::SeparatorText("Lag switch");
-                        ImAdd::CheckBox("Enable##lagswitch", &settings::mover::netblock::enabled);
-                        hint("While it is on the others see you stand where you were, you still see them move.\nSwitch it off and you are where you are now. The key on the right switches it too.");
-
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-
-                        keybind::custom_keybind("Lag key", settings::mover::netblock::keybind, max_keybind_width);
-
-                        if (netblock::holding)
-                        {
-                            ImGui::Text("Holding");
-                        }
-                        else if (netblock::failed_at != 0 && GetTickCount64() - netblock::failed_at < 5000)
-                        {
-                            ImGui::Text("Could not hold, see the log");
-                        }
-                        else if (settings::mover::netblock::enabled && settings::mover::netblock::keybind == 0)
-                        {
-                            ImGui::Text("Starting");
-                        }
-                        else if (settings::mover::netblock::enabled && netblock::ignored_at != 0 && GetTickCount64() - netblock::ignored_at < 4000)
-                        {
-                            ImGui::Text("Key ignored: %s", netblock_ignored_text());
-                        }
-                        else if (settings::mover::netblock::enabled)
-                        {
-                            ImGui::TextDisabled("Starting");
-                        }
-
-                        ImAdd::EndChild();
-                    }
-                    break;
-                }
-                case 1:
-                {
-                    std::vector<std::string> names;
-                    std::string target;
-                    {
-                        std::lock_guard<std::mutex> lock(cache::mtx);
-                        names = other_player_names();
-                        target = cache::teleport_target;
-                    }
-
-                    if (!target.empty() && std::find(names.begin(), names.end(), target) == names.end())
-                    {
-                        names.push_back(target);
-                    }
-                    sort_names(names);
-
-                    if (ImAdd::BeginChild("Teleport", ImVec2(group_width, 0.0f)))
-                    {
-                        ImAdd::CheckBox("Enable", &settings::mover::teleport::enabled);
-                        hint("Puts you on the picked player, again every 0.25 seconds.\nThe key starts the loop and stops it.");
-
-                        float available_width = ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f;
-                        float max_keybind_width = ImMin(available_width * 0.4f, 120.0f);
-
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                        keybind::activation_mode& teleport_mode = reinterpret_cast<keybind::activation_mode&>(settings::mover::teleport::activation_mode);
-                        keybind::keybind_with_mode("Teleport key", settings::mover::teleport::keybind, teleport_mode, "teleport", max_keybind_width);
-                        settings::mover::teleport::activation_mode = static_cast<int>(teleport_mode);
-
-                        switch (mover::get_teleport_status())
-                        {
-                        case mover::teleport_status::looping:
-                            ImGui::Text("Loop on: %s", target.c_str());
-                            break;
-                        case mover::teleport_status::waiting:
-                            ImGui::Text("Loop on, waiting for %s", target.c_str());
-                            break;
-                        case mover::teleport_status::no_target:
-                            ImGui::Text("Loop on, pick a player");
-                            break;
-                        default:
-                            if (settings::mover::teleport::enabled && settings::mover::teleport::keybind != 0)
-                            {
-                                ImGui::TextDisabled("Loop off, press %s to start", keybind::get_key_name(settings::mover::teleport::keybind).c_str());
-                            }
-                            else
-                            {
-                                ImGui::TextDisabled("Loop off");
-                            }
-                            break;
-                        }
-
-                        ImAdd::EndChild();
-                    }
-
-                    ImGui::SameLine();
-
-                    if (ImAdd::BeginChild("Players", ImVec2(group_width, 0.0f)))
-                    {
-                        const int clicked = player_list("##teleport_target", names, [&target](const std::string& name) { return name == target; });
-                        if (clicked >= 0)
-                        {
-                            std::lock_guard<std::mutex> lock(cache::mtx);
-                            cache::teleport_target = names[clicked] == target ? std::string{} : names[clicked];
-                        }
-
-                        ImAdd::EndChild();
-                    }
-                    break;
-                }
-                }
-                break;
-            }
-            case 3:
-            {
-                if (ImAdd::BeginChild("Anti fling", ImVec2(group_width, 0.0f)))
-                {
-                    ImAdd::CheckBox("Enable##antifling", &settings::mover::stabilizer::enabled);
-                    hint("Cars and players that move impossibly fast cannot touch you,\nand a throw is undone before the game reports it.");
-
-                    ImAdd::SliderFloat("Max speed", &settings::mover::stabilizer::max_speed, settings::mover::stabilizer::max_speed_min, settings::mover::stabilizer::max_speed_max, "%.0f");
-                    hint("The fastest anything moves you, in studs a second. More is cut back at once,\nmore than twice as much at once is a throw and is undone. Falling is left alone.\nYour speedhack, fly and jump power stay within it too.\nWalking is 16, a car about 100.");
-
-                    ImAdd::CheckBox("Anti ragdoll", &settings::mover::stabilizer::anti_ragdoll);
-                    hint("When the game knocks you over or ragdolls you, you are stood back up.");
-
-                    ImAdd::CheckBox("Parked seats only", &settings::mover::stabilizer::lock_seats);
-                    hint("A seat can only take you while its vehicle is parked next to you.\nA car that is thrown at you cannot sit you down and carry you off.\nGetting into a parked car works as before.");
-
-                    ImAdd::CheckBox("Leave thrown vehicles", &settings::mover::stabilizer::leave_vehicles);
-                    hint("Driving is left alone. A vehicle that carries you faster than the limit\nis being thrown: you jump out, are put back where you were,\nand stay out of seats for 3 seconds.");
-                    if (settings::mover::stabilizer::leave_vehicles)
-                    {
-                        ImAdd::SliderFloat("Vehicle limit", &settings::mover::stabilizer::vehicle_speed, settings::mover::stabilizer::vehicle_speed_min, settings::mover::stabilizer::vehicle_speed_max, "%.0f");
-                        hint("Studs a second, over the ground or upwards. Falling does not count.\nA car at full speed is about 100 to 140.");
-                    }
-
-                    if (settings::mover::stabilizer::enabled)
-                    {
-                        if (settings::mover::stabilizer::leave_vehicles || settings::mover::stabilizer::lock_seats)
-                        {
-                            const int thrown = stabilizer::seats_thrown;
-                            if (thrown > 0)
-                            {
-                                ImGui::Text("Seats: %d watched, %d locked, %d thrown", stabilizer::seats_watched.load(), stabilizer::seats_locked.load(), thrown);
-                            }
-                            else
-                            {
-                                ImGui::TextDisabled("Seats: %d watched, %d locked", stabilizer::seats_watched.load(), stabilizer::seats_locked.load());
-                            }
-                        }
-
-                        const int left = stabilizer::vehicles_left;
-                        if (left > 0)
-                        {
-                            ImGui::Text("Thrown vehicles left: %d, put back: %d", left, stabilizer::put_backs.load());
-                        }
-
-                        const int stopped = stabilizer::throws_stopped;
-                        const int kept_off = stabilizer::parts_kept_off;
-                        if (kept_off > 0)
-                        {
-                            ImGui::Text("Throws undone: %d, keeping %d parts off", stopped, kept_off);
-                        }
-                        else
-                        {
-                            ImGui::TextDisabled("Throws undone: %d", stopped);
-                        }
-
-                        if (GetTickCount64() - stabilizer::last_slowed < 1000)
-                        {
-                            ImGui::Text("Holding you at %.0f", stabilizer::top_speed());
-                        }
-                    }
-
-                    ImAdd::EndChild();
-                }
-
-                ImGui::SameLine();
-
-                ImGui::BeginGroup();
-
-                const float clicker_height = ImGui::GetFrameHeight() + style.WindowPadding.y * 2.0f + ImGui::GetFontSize() * 4.0f + style.ItemInnerSpacing.y + style.ItemSpacing.y * 2.0f;
-
-                if (ImAdd::BeginChild("Auto clicker", ImVec2(group_width, clicker_height)))
-                {
-
-                    bool clicker_on = clicker::on;
-                    if (ImAdd::CheckBox("Enable##autoclicker", &clicker_on))
-                    {
-                        clicker::on = clicker_on;
-                    }
-                    hint("Left clicks where the cursor is, in the game only.\nThe key on the right switches it on and off, and so does Shift + G.");
-
-                    {
-                        const float key_width = ImMin((ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f) * 0.4f, 120.0f);
-                        ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - key_width);
-                        keybind::custom_keybind("Clicker key", settings::clicker::keybind, key_width);
-                    }
-
-                    ImAdd::SliderInt("Clicks a second", &settings::clicker::clicks_per_second, settings::clicker::clicks_per_second_min, settings::clicker::clicks_per_second_max);
-                    hint("OP Auto Clicker at \"1 millisecond\" makes about 60.\nRoblox froze at 1000, so go up in steps.");
-
-                    if (!clicker_on)
-                    {
-                        ImGui::TextDisabled("Off, %s switches it too", keybind::get_key_name(settings::clicker::keybind).c_str());
-                    }
-                    else if (!clicker::clicking)
-                    {
-                        ImGui::Text("On, paused outside the game");
-                    }
-                    else
-                    {
-
-                        const int rate = clicker::clicks_per_second;
-                        if (rate > 0)
-                        {
-                            ImGui::Text("Clicking, %d a second", rate);
-                        }
-                        else
-                        {
-                            ImGui::Text("Clicking");
-                        }
-                    }
-
-                    ImAdd::EndChild();
-                }
-
-                if (ImAdd::BeginChild("Macros", ImVec2(group_width, 0.0f)))
-                {
-                    float available_width = ImGui::GetContentRegionAvail().x - style.WindowPadding.x * 2.0f;
-                    float max_keybind_width = ImMin(available_width * 0.4f, 120.0f);
-
-                    ImAdd::SeparatorText("Glitch macro");
-                    ImAdd::CheckBox("Enable##macro", &settings::macros::enabled);
-                    hint("Crouch with your head under a part, then press the key.");
-
-                    ImGui::SameLine(ImGui::GetContentRegionAvail().x + style.WindowPadding.x - max_keybind_width);
-                    keybind::custom_keybind("Macro key", settings::macros::keybind, max_keybind_width);
-
-                    ImAdd::SliderInt("Spin", &settings::macros::spin, settings::macros::spin_min, settings::macros::spin_max);
-                    hint("Change only if the turn is too slow or too fast.");
-                    ImAdd::SliderInt("Mouse DPI", &settings::macros::dpi, settings::macros::dpi_min, settings::macros::dpi_max);
-                    ImAdd::SliderFloat("Camera sensitivity", &settings::macros::sensitivity, settings::macros::sensitivity_min, settings::macros::sensitivity_max, "%.2f");
-
-                    ImAdd::EndChild();
-                }
-
-                ImGui::EndGroup();
-                break;
-            }
-            case 4:
-            {
-
-                if (ImAdd::BeginChild("Checks", ImVec2(group_width, 0.0f)))
-                {
-                    ImAdd::CheckBox("Team check", &settings::universal::teamcheck);
-                    hint("Skips your own team.");
-                    ImAdd::CheckBox("Friend check", &settings::universal::friend_check);
-                    hint("Nothing aims at your Roblox friends. Only while Friends (Visual tab) is on.");
-                    ImAdd::CheckBox("Knock check", &settings::universal::knock_check);
-
-                    ImAdd::CheckBox("Health check", &settings::universal::health_check);
-                    hint("Skips dead players and anyone below the minimum.");
-                    if (settings::universal::health_check)
-                    {
-                        ImAdd::SliderFloat("Min health", &settings::universal::min_health, 0.0f, 100.0f, "%.0f");
-                    }
-
-                    ImAdd::CheckBox("Max distance", &settings::universal::distance_check);
-                    if (settings::universal::distance_check)
-                    {
-                        ImAdd::SliderFloat("Distance", &settings::universal::max_distance, 10.0f, 5000.0f, "%.0f studs");
-                    }
-
-                    ImAdd::CheckBox("Wall check", &settings::universal::wall_check);
-                    hint("Targeting only, ESP still shows players behind walls.");
-                    ImAdd::CheckBox("Inmates: hostile only", &settings::universal::hostile_inmates_only);
-                    hint("Prison Life: skips every inmate except the ones with the red tag.");
-
-                    ImAdd::EndChild();
-                }
-
-                ImGui::SameLine();
-
-                if (ImAdd::BeginChild("Teams", ImVec2(group_width, 0.0f)))
-                {
-
-                    std::vector<cache::team_t> teams;
-                    std::unordered_set<std::string> spotter_off;
-                    std::unordered_set<std::string> target_off;
-                    std::uint64_t own_team = 0;
-                    {
-                        std::lock_guard<std::mutex> lock(cache::mtx);
-                        teams = cache::cached_teams;
-                        spotter_off = cache::spotter_off_teams;
-                        target_off = cache::target_off_teams;
-                        own_team = cache::local_team;
-
-                        cache::team_t none{};
-                        none.name = cache::no_team_name;
-                        none.players = cache::players_without_team;
-                        teams.push_back(none);
-                    }
-
-                    auto set_team = [](std::unordered_set<std::string>& off_teams, const std::string& name, bool on)
-                    {
-                        std::lock_guard<std::mutex> lock(cache::mtx);
-                        if (on)
-                        {
-                            off_teams.erase(name);
-                        }
-                        else
-                        {
-                            off_teams.insert(name);
-                        }
-                    };
-
-                    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(6.0f, 5.0f));
-                    if (ImGui::BeginTable("##teams", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
-                    {
-                        ImGui::TableSetupColumn("Team", ImGuiTableColumnFlags_WidthStretch);
-                        ImGui::TableSetupColumn("Players", ImGuiTableColumnFlags_WidthFixed, 60.0f);
-                        ImGui::TableSetupColumn("ESP", ImGuiTableColumnFlags_WidthFixed, 45.0f);
-                        ImGui::TableSetupColumn("Target", ImGuiTableColumnFlags_WidthFixed, 55.0f);
-                        ImGui::TableHeadersRow();
-
-                        for (size_t i = 0; i < teams.size(); i++)
-                        {
-                            const cache::team_t& team = teams[i];
-                            const bool is_own = team.address != 0 && team.address == own_team;
-
-                            ImGui::TableNextRow();
-
-                            ImGui::TableNextColumn();
-                            ImGui::TextUnformatted((team.name + (is_own ? " (yours)" : "")).c_str());
-
-                            ImGui::TableNextColumn();
-                            ImGui::Text("%d", team.players);
-
-                            ImGui::TableNextColumn();
-                            bool spotter_on = !spotter_off.contains(team.name);
-                            if (ImAdd::CheckBox(("##team_esp" + std::to_string(i)).c_str(), &spotter_on))
-                            {
-                                set_team(cache::spotter_off_teams, team.name, spotter_on);
-                            }
-
-                            ImGui::TableNextColumn();
-                            bool target_on = !target_off.contains(team.name);
-                            if (ImAdd::CheckBox(("##team_target" + std::to_string(i)).c_str(), &target_on))
-                            {
-                                set_team(cache::target_off_teams, team.name, target_on);
-                            }
-                        }
-
-                        ImGui::EndTable();
-                    }
-                    ImGui::PopStyleVar();
-
-                    ImAdd::EndChild();
-                }
-                break;
-            }
-            case 5:
             {
                 if (ImAdd::BeginChild("Configs", ImVec2(group_width, 0.0f)))
                 {
@@ -1600,49 +878,6 @@ static void draw_fov_circle(float fov_radius, float circle_colour[4], float outl
 	draw->AddCircle(center, fov_radius, circle_col, 0, 1.f);
 }
 
-// draw the custom crosshair
-static void draw_custom_cursor()
-{
-
-}
-
-// draw the lag switch status indicator
-static void draw_netblock_state()
-{
-    char text[96]{};
-    ImU32 colour = IM_COL32(255, 255, 255, 255);
-    const ULONGLONG now = GetTickCount64();
-
-    if (netblock::holding)
-    {
-        std::snprintf(text, sizeof(text), "Lag switch on");
-        colour = IM_COL32(255, 80, 80, 255);
-    }
-    else if (netblock::failed_at != 0 && now - netblock::failed_at < 4000)
-    {
-        std::snprintf(text, sizeof(text), "Lag switch could not hold, see the log");
-    }
-    else if (settings::mover::netblock::enabled && netblock::ignored_at != 0 && now - netblock::ignored_at < 3000)
-    {
-        std::snprintf(text, sizeof(text), "Lag key ignored: %s", netblock_ignored_text());
-    }
-    else
-    {
-        return;
-    }
-
-    const bool has_view = game::window_width > 0.0f && game::window_height > 0.0f;
-    const float middle = has_view ? game::window_offset_x + game::window_width * 0.5f : ImGui::GetIO().DisplaySize.x * 0.5f;
-    const float top = has_view ? game::window_offset_y : 0.0f;
-
-    const ImVec2 size = ImGui::CalcTextSize(text);
-    const ImVec2 at(ImTrunc(middle - size.x * 0.5f), ImTrunc(top + 48.0f));
-
-    ImDrawList* draw = ImGui::GetBackgroundDrawList();
-    draw->AddText(at + ImVec2(1.0f, 1.0f), IM_COL32(0, 0, 0, 255), text);
-    draw->AddText(at, colour, text);
-}
-
 // draw the on-screen visuals
 void render_t::render_visuals()
 {
@@ -1660,16 +895,8 @@ void render_t::render_visuals()
 	// Run ESP rendering
 	spotter::run();
 
-	if (settings::correction::draw_fov && settings::correction::enabled)
-	{
-		draw_fov_circle(settings::correction::fov, settings::correction::fov_circle_colour, settings::correction::fov_outline_colour);
-	}
-
 	if (settings::targeting::draw_fov && settings::targeting::enabled)
 	{
 		draw_fov_circle(settings::targeting::fov, settings::targeting::fov_circle_colour, settings::targeting::fov_outline_colour);
 	}
-
-    draw_custom_cursor();
-    draw_netblock_state();
 }

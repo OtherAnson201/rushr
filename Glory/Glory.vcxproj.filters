@@ -69,40 +69,10 @@
     <ClCompile Include="src\features\spotter\spotter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\visibility\visibility.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\render\keybind\keybind.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\features\stabilizer\stabilizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\features\netblock\netblock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\features\clicker\clicker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\render\menu_mouse.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\features\friends\friends.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\net\https.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\features\macros\macros.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\features\mover\mover.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\features\correction\correction.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\features\autofire\autofire.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\memory\memory.cpp">
@@ -197,46 +167,10 @@
     <ClInclude Include="src\features\spotter\spotter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\visibility\visibility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\visibility\obb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\timing\precise_sleep.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\render\keybind\keybind.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\features\stabilizer\stabilizer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\features\netblock\netblock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\features\clicker\clicker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\render\menu_mouse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\features\friends\friends.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\net\https.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\features\macros\macros.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\features\mover\mover.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\features\correction\correction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\features\autofire\autofire.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\memory\memory.h">

@@ -368,7 +368,6 @@ bool game::reinitialize_game_state()
 	game::players = players_service;
 
 	game::workspace = rbx::instance_t{};
-	game::local_player = rbx::instance_t{};
 	game::camera = 0;
 
 	game::current_job_id = 0;
@@ -389,7 +388,6 @@ void game::detach()
 	game::datamodel = rbx::instance_t{};
 	game::players = rbx::instance_t{};
 	game::workspace = rbx::instance_t{};
-	game::local_player = rbx::instance_t{};
 	game::camera = 0;
 	game::current_job_id = 0;
 
