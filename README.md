@@ -1,9 +1,9 @@
 # Rushr
 
-An external overlay for Roblox on Windows. It runs as its own program: it reads player data from the game's memory, draws it on a see-through overlay, and can move your real mouse onto a player. Nothing is injected into the game.
+An external game overlay for Windows. It runs as its own program: it reads player data from the game's memory, draws it on a see-through overlay, and can move your real mouse onto a player. Nothing is injected into the game.
 
 > [!WARNING]
-> Using this breaks Roblox's Terms of Use and can get your account banned. Use it at your own risk.
+> Using this in an online game can break its terms of use and get your account banned. Use it at your own risk.
 
 ## Features
 
@@ -36,7 +36,7 @@ The exe ends up at `build\Glory.exe`. To choose a configuration or force a full 
 ## Usage
 
 1. Run `build\Glory.exe`. It asks for administrator rights.
-2. Start Roblox and join a game. The order doesn't matter, since it waits for Roblox and reconnects if Roblox restarts.
+2. Start the game and join a server. The order doesn't matter, since it waits for the game and reconnects if the game restarts.
 3. Press **Insert** to open or close the menu.
 
 Everything starts off, so turn on what you want:
@@ -53,7 +53,7 @@ Configs are saved in `%APPDATA%\1\configs` and logs in `%APPDATA%\1\logs`.
 
 ## Updating offsets
 
-Roblox updates change the memory offsets, and the program stops reading the game correctly until they're updated.
+Game updates change the memory offsets, and the program stops reading the game correctly until they're updated.
 
 1. Copy the whole header from [offsets.imtheo.lol](https://offsets.imtheo.lol) into `offset.txt`.
 2. Close the program if it's running.
